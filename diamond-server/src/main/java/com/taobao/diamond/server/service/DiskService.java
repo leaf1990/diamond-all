@@ -72,7 +72,8 @@ public class DiskService {
         return getFilePath(Constants.BASE_DIR + "/" + group + "/" + dataId);
     }
 
-
+    // leaf add:: 数据存盘，采用ConcurrentHashMap控制并发存盘
+    // leaf add:: 存盘路径：WEB-ROOT/config-data/groupId/dataId/
     public void saveToDisk(ConfigInfo configInfo) {
         String group = configInfo.getGroup();
         String dataId = configInfo.getDataId();
