@@ -9,43 +9,6 @@
  */
 package com.taobao.diamond.client.impl;
 
-import static com.taobao.diamond.common.Constants.LINE_SEPARATOR;
-import static com.taobao.diamond.common.Constants.WORD_SEPARATOR;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URLDecoder;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.zip.GZIPInputStream;
-
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HostConfiguration;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpMethodBase;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
-import org.apache.commons.httpclient.params.HttpMethodParams;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.taobao.diamond.client.DiamondConfigure;
 import com.taobao.diamond.client.DiamondSubscriber;
 import com.taobao.diamond.client.SubscriberListener;
@@ -59,6 +22,33 @@ import com.taobao.diamond.md5.MD5;
 import com.taobao.diamond.mockserver.MockServer;
 import com.taobao.diamond.utils.LoggerInit;
 import com.taobao.diamond.utils.SimpleCache;
+import org.apache.commons.httpclient.*;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
+import org.apache.commons.httpclient.params.HttpMethodParams;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URLDecoder;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.GZIPInputStream;
+
+import static com.taobao.diamond.common.Constants.LINE_SEPARATOR;
+import static com.taobao.diamond.common.Constants.WORD_SEPARATOR;
 
 
 /**
@@ -453,6 +443,7 @@ class DefaultDiamondSubscriber implements DiamondSubscriber {
     }
 
 
+    // 获取顺序 local -> memory -> server
     public String getConfigureInfomation(String dataId, String group, long timeout) {
         // 同步接口流控
         // flowControl();
@@ -494,6 +485,7 @@ class DefaultDiamondSubscriber implements DiamondSubscriber {
     }
 
 
+    // 获取顺序 local -> memory -> server -> snapshot
     public String getAvailableConfigureInfomation(String dataId, String group, long timeout) {
         // 尝试先从本地和网络获取配置信息
         try {
@@ -513,7 +505,7 @@ class DefaultDiamondSubscriber implements DiamondSubscriber {
         return getSnapshotConfiginfomation(dataId, group);
     }
 
-
+    // 获取顺序 snapshot -> local -> server
     public String getAvailableConfigureInfomationFromSnapshot(String dataId, String group, long timeout) {
         String result = getSnapshotConfiginfomation(dataId, group);
         if (!StringUtils.isBlank(result)) {
@@ -523,6 +515,7 @@ class DefaultDiamondSubscriber implements DiamondSubscriber {
     }
 
 
+    // 获取顺序 snapshot
     private String getSnapshotConfiginfomation(String dataId, String group) {
         if (group == null) {
             group = Constants.DEFAULT_GROUP;
@@ -541,9 +534,8 @@ class DefaultDiamondSubscriber implements DiamondSubscriber {
         }
     }
 
-
     /**
-     * 
+     *
      * @param dataId
      * @param group
      * @param timeout
@@ -612,32 +604,32 @@ class DefaultDiamondSubscriber implements DiamondSubscriber {
 
                 switch (httpStatus) {
 
-                case SC_OK: {
-                    String result = getSuccess(dataId, group, cacheData, httpMethod);
-                    return result;
-                }
+                    case SC_OK: {
+                        String result = getSuccess(dataId, group, cacheData, httpMethod);
+                        return result;
+                    }
 
-                case SC_NOT_MODIFIED: {
-                    String result = getNotModified(dataId, cacheData, httpMethod);
-                    return result;
-                }
+                    case SC_NOT_MODIFIED: {
+                        String result = getNotModified(dataId, cacheData, httpMethod);
+                        return result;
+                    }
 
-                case SC_NOT_FOUND: {
-                    log.warn("没有找到DataID为:" + dataId + "对应的配置信息");
-                    cacheData.setMd5(Constants.NULL);
-                    this.snapshotConfigInfoProcessor.removeSnapshot(dataId, group);
-                    return null;
-                }
+                    case SC_NOT_FOUND: {
+                        log.warn("没有找到DataID为:" + dataId + "对应的配置信息");
+                        cacheData.setMd5(Constants.NULL);
+                        this.snapshotConfigInfoProcessor.removeSnapshot(dataId, group);
+                        return null;
+                    }
 
-                case SC_SERVICE_UNAVAILABLE: {
-                    rotateToNextDomain();
-                }
+                    case SC_SERVICE_UNAVAILABLE: {
+                        rotateToNextDomain();
+                    }
                     break;
 
-                default: {
-                    log.warn("HTTP State: " + httpStatus + ":" + httpClient.getState());
-                    rotateToNextDomain();
-                }
+                    default: {
+                        log.warn("HTTP State: " + httpStatus + ":" + httpClient.getState());
+                        rotateToNextDomain();
+                    }
                 }
             }
             catch (HttpException e) {
@@ -660,6 +652,7 @@ class DefaultDiamondSubscriber implements DiamondSubscriber {
         throw new RuntimeException("获取ConfigureInfomation超时, DataID" + dataId + ", Group为：" + group + ",超时时间为："
                 + timeout);
     }
+
 
 
     private CacheData getCacheData(String dataId, String group) {
@@ -1003,8 +996,8 @@ class DefaultDiamondSubscriber implements DiamondSubscriber {
                 gzin = new GZIPInputStream(is);
                 isr = new InputStreamReader(gzin, ((HttpMethodBase) httpMethod).getResponseCharSet()); // 设置读取流的编码格式，自定义编码
                 br = new BufferedReader(isr);
-                char[] buffer = new char[4096];
                 int readlen = -1;
+                char[] buffer = new char[4096];
                 while ((readlen = br.read(buffer, 0, 4096)) != -1) {
                     contentBuilder.append(buffer, 0, readlen);
                 }
@@ -1013,30 +1006,10 @@ class DefaultDiamondSubscriber implements DiamondSubscriber {
                 log.error("解压缩失败", e);
             }
             finally {
-                try {
-                    br.close();
-                }
-                catch (Exception e1) {
-                    // ignore
-                }
-                try {
-                    isr.close();
-                }
-                catch (Exception e1) {
-                    // ignore
-                }
-                try {
-                    gzin.close();
-                }
-                catch (Exception e1) {
-                    // ignore
-                }
-                try {
-                    is.close();
-                }
-                catch (Exception e1) {
-                    // ignore
-                }
+                IOUtils.closeQuietly(br);
+                IOUtils.closeQuietly(isr);
+                IOUtils.closeQuietly(gzin);
+                IOUtils.closeQuietly(is);
             }
         }
         else {

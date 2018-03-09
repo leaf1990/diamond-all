@@ -1,0 +1,18 @@
+1. 项目模块
+    diamond-server:配置信息管理后台
+        -配置添加，删除和修改。
+        -多节点协作，配置修改时通知另外节点更新配置(NotifyService)。
+        -配置存储；mysql(可靠存储介质) -> local file(存储Content内容) -> memory(存储gourp,dataId和Content MD5的关系)。
+        -配置读取；memory -> local file。
+        -memory配置信息会定时和mysql同步,默认10分钟一次(TimerTaskService, DumpConfigInfoTask)。
+        -提供配置获取接口给client。
+        -提供轮询接口给client，比对配置信息是否有变更。
+        -通过node.properties配置文件获取可用的server节点地址(NotifyService)
+
+    diamond-client:客户端
+        -提供配置信息获取接口给应用。
+        -通过观察者模式监听配置信息改变事件。
+        -在hosts配置a.b.c域名获取server address列表。
+        -选择server address策略，首次随机选择，不可用再轮询列表。
+        -起定时任务轮询client已用的所有dataId在server中是否有改变，如果有改变则重新获取配置信息并通知应用配置已修改。
+        -获取配置的时候，client会保存snapshot，和memory存储

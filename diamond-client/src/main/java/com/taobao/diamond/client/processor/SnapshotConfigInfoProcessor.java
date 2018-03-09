@@ -22,7 +22,9 @@ import org.apache.commons.lang.StringUtils;
 
 import com.taobao.diamond.common.Constants;
 
-
+/**
+ * snapshot ²Ù×÷
+ */
 public class SnapshotConfigInfoProcessor {
     private final String dir;
 

@@ -31,7 +31,9 @@ import com.taobao.diamond.io.watch.WatchKey;
 import com.taobao.diamond.io.watch.WatchService;
 import com.taobao.diamond.utils.FileUtils;
 
-
+/**
+ * ±æµÿ≈‰÷√º‡Ã˝
+ */
 public class LocalConfigInfoProcessor {
     private static final Log log = LogFactory.getLog(LocalConfigInfoProcessor.class);
     private ScheduledExecutorService singleExecutor = Executors.newSingleThreadScheduledExecutor();;

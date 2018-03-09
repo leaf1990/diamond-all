@@ -44,6 +44,7 @@ public class WatchKey {
         valid = true;
         this.watcher = watcher;
         // 建立内存索引
+        // leaf add 记录文件lastModified
         this.root = new PathNode(path, true);
         if (events != null) {
             for (WatchEvent.Kind<?> event : events) {
