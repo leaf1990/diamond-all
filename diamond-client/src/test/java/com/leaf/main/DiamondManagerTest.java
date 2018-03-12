@@ -9,7 +9,7 @@ import java.util.concurrent.Executor;
 /**
  * Created by yeyayun on 2018/3/7 0007.
  */
-public class AbstractConfigManager {
+public class DiamondManagerTest {
     public static void main(String[] args) {
 
 //        String content = DiamondEnvRepo.defaultEnv.getConfig(getDataId(), getGroupId(),
@@ -31,7 +31,7 @@ public class AbstractConfigManager {
         String configureInfomation = manager.getConfigureInfomation(1000);
         System.out.println(configureInfomation);
 
-//        DiamondManager manager = new DefaultDiamondManager("DEFAULT_GROUP", "topicConfig",
+//        DiamondManager manager = new DefaultDiamondager("DEFAULT_GROUP", "topicConfig",
 //                new ManagerListener() {//填写你服务端后台保存过的group和dataId
 //                    public void receiveConfigInfo(String configInfo) {
 //                        System.out.println("changed config: " + configInfo);
