@@ -2,6 +2,7 @@ package com.taobao.diamond.client.impl;
 
 import com.taobao.diamond.client.DiamondConfigure;
 import com.taobao.diamond.client.DiamondSubscriber;
+import com.taobao.diamond.common.Constants;
 import com.taobao.diamond.manager.ManagerListener;
 import org.apache.commons.lang.StringUtils;
 
@@ -35,9 +36,15 @@ public class DiamondEnv {
         diamondSubscriber.start();
     }
 
-    public String getConfig(String dataId, String groupId, int fromWhere) {
-
-        return diamondSubscriber.getConfigureInfomation(dataId, groupId, 3000);
+    public String getConfig(String dataId, String groupId, int fromWhere, int timeout) {
+        switch (fromWhere) {
+            case Constants.GET_FROM_LOCAL_SERVER_SNAPSHOT:
+                return diamondSubscriber.getConfigureInfomation(dataId, groupId, timeout);
+            case Constants.GET_FROM_SNAPSHOT_LOCAL_SERVER:
+                diamondSubscriber.getAvailableConfigureInfomationFromSnapshot(dataId, groupId, timeout);
+            default:
+                throw new IllegalArgumentException("invalid fromWhere args");
+        }
     }
 
     /**

@@ -8,7 +8,7 @@ public class DiamondEnvTest {
 
     @Test
     public void test_getConfig() {
-        String config = DefaultDiamondEnv.diamondEnv.getConfig("aa.bb.cc", "DEFAULT_GROUP", 1);
+        String config = DefaultDiamondEnv.diamondEnv.getConfig("aa.bb.cc", "DEFAULT_GROUP", 1, 1000);
         DefaultDiamondEnv.diamondEnv.addManagerListener("aa.bb.cc", "DEFAULT_GROUP", new ManagerListenerAdapter() {
             @Override
             public void receiveConfigInfo(String configInfo) {
@@ -16,5 +16,10 @@ public class DiamondEnvTest {
             }
         });
         System.out.println(config);
+    }
+
+    @Test
+    public void test_appGetConfig() {
+        AppAbstraceConfigManager.config.getParamA();
     }
 }

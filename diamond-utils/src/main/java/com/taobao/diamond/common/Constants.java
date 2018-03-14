@@ -12,7 +12,7 @@ package com.taobao.diamond.common;
 public class Constants {
 
     public static final String DEFAULT_GROUP = "DEFAULT_GROUP";
-    
+
     public static final String BASE_DIR = "config-data";
 
     public static final String DEFAULT_DOMAINNAME = "a.b.c";
@@ -68,7 +68,7 @@ public class Constants {
     public static final String DEFAULT_USERNAME = "xxx";
 
     public static final String DEFAULT_PASSWORD = "xxx";
-    
+
     /*
      * 批量操作时, 单条数据的状态码
      */
@@ -82,5 +82,9 @@ public class Constants {
     public static final int BATCH_ADD_SUCCESS = 3;
     // 更新成功
     public static final int BATCH_UPDATE_SUCCESS = 4;
+
+    public static final int GET_FROM_SNAPSHOT_LOCAL_SERVER = 1;
+
+    public static final int GET_FROM_LOCAL_SERVER_SNAPSHOT = 2;
 
 }
