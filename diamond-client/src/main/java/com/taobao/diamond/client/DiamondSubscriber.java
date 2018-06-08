@@ -9,6 +9,7 @@
  */
 package com.taobao.diamond.client;
 
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,7 +28,7 @@ public interface DiamondSubscriber extends DiamondClientSub {
      * 
      * @param subscriberListener
      */
-    public void setSubscriberListener(SubscriberListener subscriberListener);
+    void setSubscriberListener(SubscriberListener subscriberListener);
 
 
     /**
@@ -35,7 +36,7 @@ public interface DiamondSubscriber extends DiamondClientSub {
      * 
      * @return
      */
-    public SubscriberListener getSubscriberListener();
+    SubscriberListener getSubscriberListener();
 
 
     /**
@@ -47,7 +48,7 @@ public interface DiamondSubscriber extends DiamondClientSub {
      * @param timeout
      * @return
      */
-    public String getConfigureInfomation(String dataId, String group, long timeout);
+    String getConfigureInfomation(String dataId, String group, long timeout);
 
 
     /**
@@ -58,7 +59,7 @@ public interface DiamondSubscriber extends DiamondClientSub {
      * @param timeout
      * @return
      */
-    public String getConfigureInfomation(String dataId, long timeout);
+    String getConfigureInfomation(String dataId, long timeout);
 
 
     /**
@@ -70,8 +71,17 @@ public interface DiamondSubscriber extends DiamondClientSub {
      * @param timeout
      * @return
      */
-    public String getAvailableConfigureInfomation(String dataId, String group, long timeout);
+    String getAvailableConfigureInfomation(String dataId, String group, long timeout);
 
+    /**
+     * local file => snapshot, if not exist return null
+     *
+     * @param dataId
+     * @param group
+     * @param timeout
+     * @return
+     */
+    String getFromLocalAndSnapshot(String dataId, String group, long timeout);
 
     /**
      * 添加一个DataID，如果原来有此DataID和Group，将替换它们
@@ -80,7 +90,7 @@ public interface DiamondSubscriber extends DiamondClientSub {
      * @param group
      *            组名，可为null，代表使用缺省的组名
      */
-    public void addDataId(String dataId, String group);
+    void addDataId(String dataId, String group);
 
 
     /**
@@ -88,7 +98,7 @@ public interface DiamondSubscriber extends DiamondClientSub {
      * 
      * @param dataId
      */
-    public void addDataId(String dataId);
+    void addDataId(String dataId);
 
 
     /**
@@ -97,7 +107,7 @@ public interface DiamondSubscriber extends DiamondClientSub {
      * @param dataId
      * @return
      */
-    public boolean containDataId(String dataId);
+    boolean containDataId(String dataId);
 
 
     /**
@@ -106,14 +116,14 @@ public interface DiamondSubscriber extends DiamondClientSub {
      * @param group
      * @return
      */
-    public boolean containDataId(String dataId, String group);
+    boolean containDataId(String dataId, String group);
 
 
     /**
      * 
      * @param dataId
      */
-    public void removeDataId(String dataId);
+    void removeDataId(String dataId);
 
 
     /**
@@ -121,13 +131,13 @@ public interface DiamondSubscriber extends DiamondClientSub {
      * @param dataId
      * @param group
      */
-    public void removeDataId(String dataId, String group);
+    void removeDataId(String dataId, String group);
 
 
     /**
      * 清空所有的DataID
      */
-    public void clearAllDataIds();
+    void clearAllDataIds();
 
 
     /**
@@ -135,7 +145,7 @@ public interface DiamondSubscriber extends DiamondClientSub {
      * 
      * @return
      */
-    public Set<String> getDataIds();
+    Set<String> getDataIds();
 
 
     /**
@@ -143,7 +153,7 @@ public interface DiamondSubscriber extends DiamondClientSub {
      * 
      * @return
      */
-    public ConcurrentHashMap<String, ConcurrentHashMap<String, CacheData>> getCache();
+    ConcurrentHashMap<String, ConcurrentHashMap<String, CacheData>> getCache();
 
 
     /**
@@ -154,6 +164,16 @@ public interface DiamondSubscriber extends DiamondClientSub {
      * @param timeout
      * @return
      */
-    public String getAvailableConfigureInfomationFromSnapshot(String dataId, String group, long timeout);
+    String getAvailableConfigureInfomationFromSnapshot(String dataId, String group, long timeout);
 
+
+    /**
+     * batch query from diamond server
+     *
+     * @param dataIds
+     * @param group
+     * @param timeout
+     * @return
+     */
+    BatchHttpResult getConfigureInformationBatch(List<String> dataIds, String group, int timeout);
 }

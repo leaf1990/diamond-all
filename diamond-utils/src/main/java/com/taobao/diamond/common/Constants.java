@@ -55,6 +55,8 @@ public class Constants {
 
     public static final String HTTP_URI_FILE = "/config.co";
 
+    public static final String HTTP_URI_FILE_BATCH = "/configBatch.co";
+
     public static final String CONFIG_HTTP_URI_FILE = "/url";
 
     public static final String HTTP_URI_LOGIN = "/url";
@@ -82,9 +84,10 @@ public class Constants {
     public static final int BATCH_ADD_SUCCESS = 3;
     // 更新成功
     public static final int BATCH_UPDATE_SUCCESS = 4;
+    public static final int BATCH_HTTP_EXCEPTION = 5;
+    public static final int BATCH_IO_EXCEPTION = 6;
 
     public static final int GET_FROM_SNAPSHOT_LOCAL_SERVER = 1;
 
     public static final int GET_FROM_LOCAL_SERVER_SNAPSHOT = 2;
-
 }

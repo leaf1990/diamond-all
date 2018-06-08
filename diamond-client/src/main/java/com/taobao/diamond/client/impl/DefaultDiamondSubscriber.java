@@ -9,6 +9,7 @@
  */
 package com.taobao.diamond.client.impl;
 
+import com.taobao.diamond.client.BatchHttpResult;
 import com.taobao.diamond.client.DiamondConfigure;
 import com.taobao.diamond.client.DiamondSubscriber;
 import com.taobao.diamond.client.SubscriberListener;
@@ -18,8 +19,10 @@ import com.taobao.diamond.client.processor.SnapshotConfigInfoProcessor;
 import com.taobao.diamond.common.Constants;
 import com.taobao.diamond.configinfo.CacheData;
 import com.taobao.diamond.configinfo.ConfigureInfomation;
+import com.taobao.diamond.domain.ConfigInfoEx;
 import com.taobao.diamond.md5.MD5;
 import com.taobao.diamond.mockserver.MockServer;
+import com.taobao.diamond.utils.JSONUtils;
 import com.taobao.diamond.utils.LoggerInit;
 import com.taobao.diamond.utils.SimpleCache;
 import org.apache.commons.httpclient.*;
@@ -31,6 +34,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.type.TypeReference;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -248,8 +252,6 @@ class DefaultDiamondSubscriber implements DiamondSubscriber {
 
     /**
      * 向DiamondServer请求dataId对应的配置信息，并将结果抛给客户的监听器
-     * 
-     * @param dataId
      */
     private void receiveConfigInfo(final CacheData cacheData) {
         scheduledExecutor.execute(new Runnable() {
@@ -484,7 +486,6 @@ class DefaultDiamondSubscriber implements DiamondSubscriber {
         }
     }
 
-
     // 获取顺序 local -> memory -> server -> snapshot
     public String getAvailableConfigureInfomation(String dataId, String group, long timeout) {
         // 尝试先从本地和网络获取配置信息
@@ -503,6 +504,59 @@ class DefaultDiamondSubscriber implements DiamondSubscriber {
             return null;
         }
         return getSnapshotConfiginfomation(dataId, group);
+    }
+
+    public String getFromLocalAndSnapshot(String dataId, String group, long timeout) {
+        try {
+            String result = getConfigureInfomationFromLocal(dataId, group, timeout);
+            if (result != null && result.length() > 0) {
+                return result;
+            }
+        } catch (Throwable t) {
+            log.error(t.getMessage(), t);
+        }
+
+        if (MockServer.isTestMode()) {
+            return null;
+        }
+        return getSnapshotConfigInformation(dataId, group);
+    }
+
+    public String getConfigureInfomationFromLocal(String dataId, String group, long timeout) {
+        if (null == group) {
+            group = Constants.DEFAULT_GROUP;
+        }
+        CacheData cacheData = getCacheData(dataId, group);
+        try {
+            String localConfig = localConfigInfoProcessor.getLocalConfigureInfomation(cacheData, true);
+            if (localConfig != null) {
+                cacheData.incrementFetchCountAndGet();
+                saveSnapshot(dataId, group, localConfig);
+
+                return localConfig;
+            }
+        } catch (IOException e) {
+            log.error("getLocalConfigureInfomation error", e);
+        }
+
+        return null;
+    }
+
+    private String getSnapshotConfigInformation(String dataId, String group) {
+        if (group == null) {
+            group = Constants.DEFAULT_GROUP;
+        }
+        try {
+            CacheData cacheData = getCacheData(dataId, group);
+            String config = this.snapshotConfigInfoProcessor.getConfigInfomation(dataId, group);
+            if (config != null && cacheData != null) {
+                cacheData.incrementFetchCountAndGet();
+            }
+            return config;
+        } catch (Exception e) {
+            log.error("getSnapshotConfigInformation error dataId=" + dataId + ",group=" + group, e);
+            return null;
+        }
     }
 
     // 获取顺序 snapshot -> local -> server
@@ -881,9 +935,6 @@ class DefaultDiamondSubscriber implements DiamondSubscriber {
 
     /**
      * 获取探测更新的DataID的请求字符串
-     * 
-     * @param localModifySet
-     * @return
      */
     private String getProbeUpdateString() {
         // 获取check的DataID:Group:MD5串
@@ -1233,4 +1284,80 @@ class DefaultDiamondSubscriber implements DiamondSubscriber {
         // TODO 哪些值可以在运行时动态更新?
     }
 
+    @Override
+    public BatchHttpResult getConfigureInformationBatch(List<String> dataIds, String group, int timeout) {
+        if (dataIds == null) {
+            log.error("dataId list cannot be null,group=" + group);
+            return new BatchHttpResult(HttpStatus.SC_BAD_REQUEST);
+        }
+        if (group == null) {
+            group = Constants.DEFAULT_GROUP;
+        }
+
+        StringBuilder dataIdBuilder = new StringBuilder();
+        for (String dataId : dataIds) {
+            dataIdBuilder.append(dataId).append(Constants.LINE_SEPARATOR);
+        }
+        String dataIdStr = dataIdBuilder.toString();
+
+        PostMethod post = new PostMethod(Constants.HTTP_URI_FILE_BATCH);
+        post.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, timeout);
+
+        BatchHttpResult response = null;
+        try {
+            NameValuePair dataIdValue = new NameValuePair("dataIds", dataIdStr);
+            NameValuePair groupValue = new NameValuePair("group", group);
+
+            post.setRequestBody(new NameValuePair[]{dataIdValue, groupValue});
+
+            httpClient.getHostConfiguration()
+                    .setHost(diamondConfigure.getDomainNameList().get(this.domainNamePos.get()),
+                            this.diamondConfigure.getPort());
+            int status = httpClient.executeMethod(post);
+            String responseMsg = post.getResponseBodyAsString();
+
+            if (status == HttpStatus.SC_OK) {
+                String json = null;
+                try {
+                    json = responseMsg;
+
+                    List<ConfigInfoEx> configInfoExList = new LinkedList<ConfigInfoEx>();
+                    Object resultObj = JSONUtils.deserializeObject(json, new TypeReference<List<ConfigInfoEx>>() {
+                    });
+                    if (!(resultObj instanceof List<?>)) {
+                        throw new RuntimeException("batch query deserialize type error, not list, json=" + json);
+                    }
+                    List<ConfigInfoEx> resultList = (List<ConfigInfoEx>) resultObj;
+                    for (ConfigInfoEx configInfoEx : resultList) {
+                        configInfoExList.add(configInfoEx);
+                    }
+
+                    response = new BatchHttpResult(configInfoExList);
+                    log.info("batch query success,dataIds=" + dataIdStr + ",group="
+                            + group + ",json=" + json);
+                } catch (Exception e) {
+                    response = new BatchHttpResult(Constants.BATCH_OP_ERROR);
+                    log.error("batch query deserialize error,dataIdStr=" + dataIdStr
+                            + ",group=" + group + ",json=" + json, e);
+                }
+
+            } else if (status == HttpStatus.SC_REQUEST_TIMEOUT) {
+                response = new BatchHttpResult(HttpStatus.SC_REQUEST_TIMEOUT);
+                log.error("batch query timeout, socket timeout(ms):" + timeout + ",dataIds=" + dataIdStr + ",group=" + group);
+            } else {
+                response = new BatchHttpResult(status);
+                log.error("batch query fail, status:" + status + ", response:" + responseMsg + ",dataIds=" + dataIdStr + ",group=" + group);
+            }
+        } catch (HttpException e) {
+            response = new BatchHttpResult(Constants.BATCH_HTTP_EXCEPTION);
+            log.error("batch query http exception,dataIds=" + dataIdStr + ",group=" + group, e);
+        } catch (IOException e) {
+            response = new BatchHttpResult(Constants.BATCH_IO_EXCEPTION);
+            log.error("batch query io exception, dataIds=" + dataIdStr + ",group=" + group, e);
+        } finally {
+            post.releaseConnection();
+        }
+
+        return response;
+    }
 }

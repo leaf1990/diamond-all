@@ -66,7 +66,13 @@
 		<servlet-class>com.taobao.diamond.server.controller.ConfigServlet</servlet-class>
 		<load-on-startup>-1</load-on-startup>
 	</servlet>
-	
+
+	<servlet>
+		<servlet-name>ConfigBatchServlet</servlet-name>
+		<servlet-class>com.taobao.diamond.server.controller.ConfigBatchServlet</servlet-class>
+		<load-on-startup>-1</load-on-startup>
+	</servlet>
+
 	<servlet-mapping>
 		<servlet-name>diamond</servlet-name>
 		<url-pattern>*.do</url-pattern>
@@ -76,7 +82,12 @@
 		<servlet-name>ConfigServlet</servlet-name>
 		<url-pattern>/config.co</url-pattern>
 	</servlet-mapping>
-	
+
+	<servlet-mapping>
+		<servlet-name>ConfigBatchServlet</servlet-name>
+		<url-pattern>/configBatch.co</url-pattern>
+	</servlet-mapping>
+
 	<welcome-file-list>
 		<welcome-file>/jsp/login.jsp</welcome-file>
 	</welcome-file-list>
