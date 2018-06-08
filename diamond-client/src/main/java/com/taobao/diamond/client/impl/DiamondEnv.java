@@ -18,14 +18,14 @@ public class DiamondEnv {
     private static final Log log = LogFactory.getLog(DiamondEnv.class);
     private static final String DIAMOND_CONF_SERVER_HTTP = "DIAMOND_CONF_SERVER_HTTP";
     private static final String DIAMOND_CONF_SERVER_PORT = "DIAMOND_CONF_SERVER_PORT";
-    private static final String DIAMOND_SERVER_PORT = "DIAMOND_PORT";
+    private static final String DIAMOND_CONF_PORT = "DIAMOND_CONF_PORT";
     private DiamondSubscriber diamondSubscriber = null;
 
     public DiamondEnv() {
         this(
                 System.getenv(DIAMOND_CONF_SERVER_HTTP),
                 System.getenv(DIAMOND_CONF_SERVER_PORT),
-                System.getenv(DIAMOND_SERVER_PORT)
+                System.getenv(DIAMOND_CONF_PORT)
         );
     }
 
@@ -47,7 +47,7 @@ public class DiamondEnv {
             Integer port = Integer.parseInt(diamondPort);
             diamondConfigure.setPort(port);
         } else if (diamondPort != null) {
-            throw new RuntimeException("Env " + DIAMOND_SERVER_PORT + " format error: " + diamondPort);
+            throw new RuntimeException("Env " + DIAMOND_CONF_PORT + " format error: " + diamondPort);
         }
 
         diamondSubscriber = DiamondClientFactory.getSingletonDiamondSubscriber();

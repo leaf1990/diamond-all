@@ -236,17 +236,20 @@
 		</plugins>
 	</reporting>
 
+	<!--定义snapshots库和releases库的nexus地址-->
 	<distributionManagement>
-        <repository>
-             <id>taocodeReleases</id>
-			 <name>taocode nexus</name>
-             <url>http://mvnrepo.code.taobao.org/nexus/content/repositories/releases/</url> 
-        </repository>
-        <snapshotRepository>
-              <id>taocodeSnapshots</id>
-			  <name>taocode nexus</name>
-              <url>http://mvnrepo.code.taobao.org/nexus/content/repositories/snapshots/</url>
-         </snapshotRepository>
+		<repository>
+			<id>nexus-releases-yuna</id>
+			<url>
+				http://47.104.221.42:8081/repository/maven-releases/
+			</url>
+		</repository>
+		<snapshotRepository>
+			<id>nexus-snapshots-yuna</id>
+			<url>
+				http://47.104.221.42:8081/repository/maven-snapshots/
+			</url>
+		</snapshotRepository>
 	</distributionManagement>
 
 </project>
